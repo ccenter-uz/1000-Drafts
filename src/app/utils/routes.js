@@ -2,6 +2,18 @@ export const routes = [
   {
     path: "/",
     name: "Dashboard",
-    component: () => import("../../pages/Dashboard/Dashboard.vue"),
+    redirect: { name: "Home" },
+    children: [
+      {
+        path: "/history",
+        name: "History",
+        component: () => import("../../pages/History/History.vue"),
+      },
+      {
+        path: "/home",
+        name: "Home",
+        component: () => import("../../pages/Home/Home.vue"),
+      },
+    ],
   },
 ];

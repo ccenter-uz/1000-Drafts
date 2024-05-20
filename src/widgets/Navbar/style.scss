@@ -1,35 +1,23 @@
 .nav {
-    width: auto;
-    height: 75px;
-    padding: 0 10%;
+    width: 99%;
+    margin: 0 auto;
+    height: 70px;
+    padding: 8px 16px;
     background-color: #fff;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.2);
     color: #757575;
-    display: flex;
-}
+    border-radius: 0 0 8px 8px;
 
-.nav h1 {
-    cursor: pointer;
-}
 
-.menu__list {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-}
 
-.menu__item {
-    list-style: none;
-}
+    .menu-hamburger {
+        cursor: pointer;
+        display: none;
+    }
 
-.menu__item a {
-    color: #757575;
-    text-decoration: none;
-}
-
-.isActive {
-    border-bottom: 3px solid blueviolet;
-    padding-bottom: 0.5rem;
-    opacity: 0.9;
-    color: blueviolet;
+    @media screen and (max-width: 768px) {
+        .menu-hamburger {
+            display: block;
+        }
+    }
 }
