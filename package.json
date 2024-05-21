@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mdi/js": "^7.4.47",
     "axios": "^1.4.0",
     "pinia": "^2.1.4",
     "react-toastify": "^9.1.3",
