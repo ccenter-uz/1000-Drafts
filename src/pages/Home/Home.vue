@@ -2,18 +2,71 @@
 <script setup>
 import Magnify from "vue-material-design-icons/Magnify.vue";
 import Plus from "vue-material-design-icons/Plus.vue";
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import Dialog from "../../shared/ui/Dialog/Dialog.vue";
+import { CREATE, GET } from "./api";
+import Swal from "sweetalert2";
+
 // CONSTANTS
 const router = useRouter();
-const page = ref(1);
-const dialog = ref(false);
+const route = useRoute();
+let page = ref(1);
+let dialog = ref(false);
+let endDialog = ref(false);
+let record = ref(null);
+let search = ref("");
+
 // METHODS
-const handlePageChange = (e) => {
+onMounted(async () => {
+  await GET(route.query.search, route.query.page);
+});
+
+watch(
+  () => ({ search: route.query.search, page: route.query.page }),
+  async () => {
+    route.query.search && (await GET(route.query.search, route.query.page));
+  }
+);
+
+const handlePageChange = async (e) => {
   page.value = e;
-  router.push(`?page=${e}`);
+  router.push({ query: { search: route.query.search, page: e } });
 };
+const handleSubmit = async (e) => {
+  const formData = new FormData(e.currentTarget);
+  const body = {
+    name: formData.get("fio"),
+    phone: formData.get("phone"),
+    pinfl: formData.get("pinfl"),
+    note: formData.get("note"),
+    created_by: formData.get("created_by"),
+  };
+  const res = await CREATE(body);
+  Swal.fire({ title: "Успех", text: "Запись создана", icon: "success" });
+  console.log(body, "create-body");
+};
+const handleEnd = async (e) => {
+  const formData = new FormData(e.currentTarget);
+  const body = {
+    id: record.value.id,
+    operator_number: formData.get("operator_number"),
+  };
+  console.log(body, "end-body");
+};
+const copyToClipboard = async (text) => {
+  if (navigator.clipboard) {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert("Text copied to clipboard!");
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
+    }
+  } else {
+    console.error("Clipboard API not supported");
+  }
+};
+
 // DATAS
 const columns = [
   {
@@ -23,6 +76,10 @@ const columns = [
   {
     title: "ФИО",
     key: "name",
+  },
+  {
+    title: "Телефон",
+    key: "phone",
   },
   {
     title: "Пинфл",
@@ -37,32 +94,41 @@ const columns = [
     key: "created",
   },
   {
+    title: "Оператор создал",
+    key: "created_by",
+  },
+  {
     title: "Действия",
     key: "actions",
   },
 ];
-
 const rows = [
   {
     id: 1,
     name: "Фазилова Анастасия Александровна",
     pinfl: "123456789012",
-    note: "Примечание ",
-    created: "21.05.2024, Абдуллаева Робия Уласенова",
+    phone: "998901236547",
+    note: "Примечание budet nado",
+    created: "21.05.2024",
+    created_by: "№425",
   },
   {
     id: 2,
     name: "Фазилова Анастасия Александровна",
     pinfl: "123456789012",
+    phone: "998901236547",
     note: "Примечание ",
-    created: "21.05.2024, Абдуллаева Робия Уласенова",
+    created: "21.05.2024",
+    created_by: "№425",
   },
   {
     id: 3,
     name: "Фазилова Анастасия Александровна",
     pinfl: "123456789012",
+    phone: "998901236547",
     note: "Примечание ",
-    created: "21.05.2024, Абдуллаева Робия Уласенова",
+    created: "21.05.2024",
+    created_by: "№425",
   },
 ];
 </script>
@@ -86,12 +152,20 @@ const rows = [
         color="info"
         :prepend-icon="Plus"
         class="d-flex align-center justify-center"
+        @click="dialog = true"
         >Создать</v-btn
       >
     </div>
     <div class="search_part w-100 my-3">
       <v-text-field
+        @click:append-inner="
+          router.push({ query: { search: search, page: 1 } }), (page = 1)
+        "
+        @keydown.enter="
+          router.push({ query: { search: search, page: 1 } }), (page = 1)
+        "
         label="Поиск"
+        v-model="search"
         aria-label="Поиск"
         variant="outlined"
         clearable
@@ -111,8 +185,13 @@ const rows = [
           </tr>
         </thead>
         <tbody>
-          <tr v-for="row in rows">
-            <td v-for="{ key } in columns" class="text-left">
+          <tr v-if="rows && rows?.length > 0" v-for="row in rows">
+            <td
+              v-for="{ key } in columns"
+              :class="key === 'created_by' ? 'text-center' : 'text-left'"
+              @click.prevent="key === 'note' && copyToClipboard(row['note'])"
+              :style="key === 'note' && 'cursor:pointer'"
+            >
               <v-tooltip
                 v-if="key === 'note'"
                 :text="row['note']"
@@ -120,15 +199,25 @@ const rows = [
                 location="bottom"
               >
               </v-tooltip>
-              {{ row[key] }}
+              {{
+                row[key] === row["note"]
+                  ? row["note"]?.length > 15
+                    ? row["note"].slice(0, 10) + "..."
+                    : row["note"]
+                  : row[key]
+              }}
               <v-btn
                 v-if="key == 'actions'"
                 color="warning"
                 class="d-flex align-center justify-center"
+                @click="(endDialog = true), (record = row)"
               >
                 Завершить
               </v-btn>
             </td>
+          </tr>
+          <tr v-else-if="rows && rows?.length == 0">
+            <td class="text-center my-4">Ничего не найдено</td>
           </tr>
         </tbody>
       </v-table>
@@ -142,7 +231,82 @@ const rows = [
         />
       </div>
     </div>
-    <!-- DIALOG -->
-    <Dialog :dialog="dialog" />
+    <!-- CREATE -->
+    <Dialog
+      :dialog="dialog"
+      width="500"
+      title="Создать"
+      subtitle="Создание записи"
+    >
+      <v-form
+        @submit.prevent="handleSubmit"
+        id="create-form"
+        class="w-100 px-3 mt-5"
+      >
+        <v-text-field
+          name="fio"
+          variant="outlined"
+          label="ФИО"
+          density="compact"
+          color="info"
+        />
+        <v-text-field
+          name="phone"
+          variant="outlined"
+          label="Телефон"
+          density="compact"
+          color="info"
+        />
+        <v-text-field
+          name="pinfl"
+          variant="outlined"
+          label="Пинфл"
+          density="compact"
+          color="info"
+        />
+        <v-textarea
+          :auto-grow="true"
+          name="note"
+          variant="outlined"
+          label="Примечание"
+          density="compact"
+          color="info"
+        />
+        <v-text-field
+          name="created_by"
+          variant="outlined"
+          label="Номер оператора"
+          density="compact"
+          color="info"
+          :rules="[(v) => !!v || 'Обязательное поле']"
+        />
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="red" @click="dialog = false">Отмена</v-btn>
+          <v-btn color="info" type="submit" form="create-form">Сохранить</v-btn>
+        </v-card-actions>
+      </v-form>
+    </Dialog>
+    <!-- END -->
+    <Dialog
+      :dialog="endDialog"
+      title="Завершить"
+      subtitle="Чтобы завершить запись укажите номер оператора"
+    >
+      <v-form id="end-form" @submit.prevent="handleEnd" class="w-100 px-3 mt-5">
+        <v-text-field
+          name="operator_number"
+          variant="outlined"
+          label="Номер оператора"
+          density="compact"
+          color="info"
+        />
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="red" @click="endDialog = false">Отмена</v-btn>
+          <v-btn color="info" type="submit" form="end-form">Сохранить</v-btn>
+        </v-card-actions>
+      </v-form>
+    </Dialog>
   </section>
 </template>

@@ -2,20 +2,20 @@
 <script setup>
 const props = defineProps({
   dialog: Boolean,
+  width: String,
+  title: String,
+  subtitle: String,
 });
 </script>
 
 <template>
   <v-dialog v-model="props.dialog" width="auto">
     <v-card
-      max-width="400"
-      prepend-icon="mdi-update"
-      text="Your application will relaunch automatically after the update is complete."
-      title="Update in progress"
+      :width="props.width"
+      :title="props.title"
+      :subtitle="props.subtitle"
     >
-      <template v-slot:actions>
-        <v-btn class="ms-auto" text="Ok" @click="props.dialog = false"></v-btn>
-      </template>
+      <slot />
     </v-card>
   </v-dialog>
 </template>

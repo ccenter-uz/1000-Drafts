@@ -6,6 +6,9 @@ import { routes } from "./app/utils/routes";
 import { createVuetify } from "vuetify/lib/framework.mjs";
 import { aliases, mdi } from "vuetify/iconsets/mdi-svg";
 import { mdiAccount } from "@mdi/js";
+import { VueClipboard } from "@soerenmartius/vue3-clipboard";
+import VueSweetalert2 from "vue-sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -32,4 +35,10 @@ const vuetify = createVuetify({
   },
 });
 
-createApp(App).use(router).use(vuetify).use(pinia).mount("#app");
+createApp(App)
+  .use(router)
+  .use(vuetify)
+  .use(pinia)
+  .use(VueSweetalert2)
+  .use(VueClipboard)
+  .mount("#app");
