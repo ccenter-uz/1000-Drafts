@@ -7,12 +7,7 @@ export const GET = async (search = "null", page, pageSize) => {
     .then((res) => res.data);
 };
 
-// CREATE
-export const CREATE = async (body) => {
-  // return api.post("/users", body).then((res) => res.data);
-};
-
-// END
-export const END = async (body) => {
+// RETURN
+export const RETURN = async (body) => {
   // return api.post("/users", body).then((res) => res.data);
 };

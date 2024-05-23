@@ -5,33 +5,56 @@ import Plus from "vue-material-design-icons/Plus.vue";
 import { ref, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Dialog from "../../shared/ui/Dialog/Dialog.vue";
-import { CREATE, GET } from "./api";
+import { CREATE, GET, END } from "./api";
 import Swal from "sweetalert2";
 
 // CONSTANTS
 const router = useRouter();
 const route = useRoute();
-let page = ref(1);
+let page = ref(Number(route.query.page) || 1);
 let dialog = ref(false);
 let endDialog = ref(false);
 let record = ref(null);
-let search = ref("");
+let search = ref(route.query.search || "");
+const pageSizes = ["10", "20", "50", "100"];
+const pageSize = ref(route.query.pageSize || 10);
+const totalPage = ref(0);
 
 // METHODS
 onMounted(async () => {
-  await GET(route.query.search, route.query.page);
+  await GET(route.query.search, route.query.page, route.query.pageSize);
 });
 
 watch(
-  () => ({ search: route.query.search, page: route.query.page }),
+  () => ({
+    search: route.query.search,
+    page: route.query.page,
+    pageSize: route.query.pageSize,
+  }),
   async () => {
-    route.query.search && (await GET(route.query.search, route.query.page));
+    await GET(route.query.search, route.query.page, route.query.pageSize);
   }
 );
 
+const handlePageSizeChange = async (e) => {
+  pageSize.value = e;
+  router.push({
+    query: {
+      search: route.query.search,
+      page: route.query.page,
+      pageSize: e,
+    },
+  });
+};
 const handlePageChange = async (e) => {
   page.value = e;
-  router.push({ query: { search: route.query.search, page: e } });
+  router.push({
+    query: {
+      search: route.query.search,
+      page: e,
+      pageSize: route.query.pageSize,
+    },
+  });
 };
 const handleSubmit = async (e) => {
   const formData = new FormData(e.currentTarget);
@@ -42,9 +65,16 @@ const handleSubmit = async (e) => {
     note: formData.get("note"),
     created_by: formData.get("created_by"),
   };
-  const res = await CREATE(body);
-  Swal.fire({ title: "Успех", text: "Запись создана", icon: "success" });
-  console.log(body, "create-body");
+  if (body.name && body.phone && body.pinfl && body.created_by && body.note) {
+    const res = await CREATE(body);
+    res &&
+      ((dialog.value = false),
+      Swal.fire({ title: "Успех", text: "Запись создана", icon: "success" }),
+      GET(route.query.search, route.query.page));
+    console.log(body, "create-body");
+  } else {
+    console.log("Fill all fields");
+  }
 };
 const handleEnd = async (e) => {
   const formData = new FormData(e.currentTarget);
@@ -52,7 +82,16 @@ const handleEnd = async (e) => {
     id: record.value.id,
     operator_number: formData.get("operator_number"),
   };
-  console.log(body, "end-body");
+  if (body.operator_number) {
+    const res = await END(body);
+    res &&
+      ((endDialog.value = false),
+      Swal.fire({ title: "Успех", text: "Запись завершена", icon: "success" }),
+      GET(route.query.search, route.query.page));
+    console.log(body, "end-body");
+  } else {
+    console.log("Fill all fields");
+  }
 };
 const copyToClipboard = async (text) => {
   if (navigator.clipboard) {
@@ -108,7 +147,7 @@ const rows = [
     name: "Фазилова Анастасия Александровна",
     pinfl: "123456789012",
     phone: "998901236547",
-    note: "Примечание budet nado",
+    note: "Примечание budet nado ыфвлдфцов щзшфцовщш фрцагш рфцшгщ арфшщгр афцгр ашгфыр ашгфрыа грфы",
     created: "21.05.2024",
     created_by: "№425",
   },
@@ -159,10 +198,14 @@ const rows = [
     <div class="search_part w-100 my-3">
       <v-text-field
         @click:append-inner="
-          router.push({ query: { search: search, page: 1 } }), (page = 1)
+          router.push({ query: { search: search, page: 1, pageSize: 10 } }),
+            (page = 1),
+            (pageSize = 10)
         "
         @keydown.enter="
-          router.push({ query: { search: search, page: 1 } }), (page = 1)
+          router.push({ query: { search: search, page: 1, pageSize: 10 } }),
+            (page = 1),
+            (pageSize = 10)
         "
         label="Поиск"
         v-model="search"
@@ -222,7 +265,17 @@ const rows = [
         </tbody>
       </v-table>
       <!-- PAGINATION -->
-      <div class="w-100 d-flex justify-end my-3">
+      <div class="w-100 d-flex align-center justify-end my-3">
+        <p class="text mr-3">Всего записей: {{ rows?.length }}</p>
+        <v-select
+          class="select"
+          v-model="pageSize"
+          :items="pageSizes"
+          density="compact"
+          hide-details
+          variant="outlined"
+          @update:model-value="handlePageSizeChange"
+        />
         <v-pagination
           :length="6"
           v-model="page"
@@ -246,9 +299,10 @@ const rows = [
         <v-text-field
           name="fio"
           variant="outlined"
-          label="ФИО"
+          label="Ф.И.О"
           density="compact"
           color="info"
+          :rules="[(v) => !!v || 'Ф.И.О обязательное поле']"
         />
         <v-text-field
           name="phone"
@@ -256,6 +310,7 @@ const rows = [
           label="Телефон"
           density="compact"
           color="info"
+          :rules="[(v) => !!v || 'Телефон обязательное поле']"
         />
         <v-text-field
           name="pinfl"
@@ -263,6 +318,7 @@ const rows = [
           label="Пинфл"
           density="compact"
           color="info"
+          :rules="[(v) => !!v || 'Пинфл обязательное поле']"
         />
         <v-textarea
           :auto-grow="true"
@@ -271,6 +327,7 @@ const rows = [
           label="Примечание"
           density="compact"
           color="info"
+          :rules="[(v) => !!v || 'Примечание обязательное поле']"
         />
         <v-text-field
           name="created_by"
@@ -300,6 +357,7 @@ const rows = [
           label="Номер оператора"
           density="compact"
           color="info"
+          :rules="[(v) => !!v || 'Обязательное поле']"
         />
         <v-card-actions>
           <v-spacer />
