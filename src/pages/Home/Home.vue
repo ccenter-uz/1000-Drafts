@@ -21,8 +21,12 @@ const pageSize = ref(route.query.pageSize || 10);
 const totalPage = ref(0);
 
 // METHODS
-onMounted(async () => {
+const handleGet = async () => {
   await GET(route.query.search, route.query.page, route.query.pageSize);
+};
+
+onMounted(async () => {
+  await handleGet();
 });
 
 watch(
@@ -32,7 +36,7 @@ watch(
     pageSize: route.query.pageSize,
   }),
   async () => {
-    await GET(route.query.search, route.query.page, route.query.pageSize);
+    await handleGet();
   }
 );
 
@@ -70,7 +74,7 @@ const handleSubmit = async (e) => {
     res &&
       ((dialog.value = false),
       Swal.fire({ title: "Успех", text: "Запись создана", icon: "success" }),
-      GET(route.query.search, route.query.page));
+      handleGet());
     console.log(body, "create-body");
   } else {
     console.log("Fill all fields");
@@ -87,7 +91,7 @@ const handleEnd = async (e) => {
     res &&
       ((endDialog.value = false),
       Swal.fire({ title: "Успех", text: "Запись завершена", icon: "success" }),
-      GET(route.query.search, route.query.page));
+      handleGet());
     console.log(body, "end-body");
   } else {
     console.log("Fill all fields");

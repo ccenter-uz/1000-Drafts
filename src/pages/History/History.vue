@@ -17,8 +17,12 @@ const pageSize = ref(route.query.pageSize || 10);
 const totalPage = ref(0);
 
 // METHODS
-onMounted(async () => {
+const handleGet = async () => {
   await GET(route.query.search, route.query.page, route.query.pageSize);
+};
+
+onMounted(async () => {
+  await handleGet();
 });
 
 watch(
@@ -28,7 +32,7 @@ watch(
     pageSize: route.query.pageSize,
   }),
   async () => {
-    await GET(route.query.search, route.query.page, route.query.pageSize);
+    await handleGet();
   }
 );
 
@@ -60,7 +64,7 @@ const handleBack = async (e) => {
   const res = await RETURN(body);
   res &&
     (Swal.fire({ title: "Успех", text: "Запись вернулась", icon: "success" }),
-    GET(route.query.search, route.query.page));
+    await handleGet());
   console.log(body, "end-body");
 };
 const copyToClipboard = async (text) => {
