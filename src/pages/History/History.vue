@@ -118,6 +118,10 @@ const columns = [
     key: "created_by",
   },
   {
+    title: "Оператор завершил",
+    key: "end_by",
+  },
+  {
     title: "Действия",
     key: "actions",
   },
