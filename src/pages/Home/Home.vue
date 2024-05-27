@@ -4,7 +4,6 @@ import Magnify from "vue-material-design-icons/Magnify.vue";
 import Plus from "vue-material-design-icons/Plus.vue";
 import { ref, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import Dialog from "../../shared/ui/Dialog/Dialog.vue";
 import { CREATE, GET, END } from "./api";
 import Swal from "sweetalert2";
 
@@ -111,7 +110,22 @@ const copyToClipboard = async (text) => {
       console.error("Failed to copy text: ", err);
     }
   } else {
-    console.error("Clipboard API not supported");
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+
+    textArea.style.position = "absolute";
+    textArea.style.left = "-999999px";
+
+    document.body.prepend(textArea);
+    textArea.select();
+
+    try {
+      document.execCommand("copy");
+    } catch (error) {
+      console.error(error);
+    } finally {
+      textArea.remove();
+    }
   }
 };
 
@@ -267,86 +281,90 @@ const columns = [
       </div>
     </div>
     <!-- CREATE -->
-    <Dialog
-      :dialog="dialog"
-      width="500"
-      title="Создать"
-      subtitle="Создание записи"
-    >
-      <v-form
-        @submit.prevent="handleSubmit"
-        id="create-form"
-        class="w-100 px-3 mt-5"
-      >
-        <v-text-field
-          name="fio"
-          variant="outlined"
-          label="Ф.И.О"
-          density="compact"
-          color="info"
-          :rules="[(v) => !!v || 'Ф.И.О обязательное поле']"
-        />
-        <v-text-field
-          name="phone"
-          variant="outlined"
-          label="Телефон"
-          density="compact"
-          color="info"
-          :rules="[(v) => !!v || 'Телефон обязательное поле']"
-        />
-        <v-text-field
-          name="pinfl"
-          variant="outlined"
-          label="Пинфл"
-          density="compact"
-          color="info"
-          :rules="[(v) => !!v || 'Пинфл обязательное поле']"
-        />
-        <v-textarea
-          :auto-grow="true"
-          name="note"
-          variant="outlined"
-          label="Примечание"
-          density="compact"
-          color="info"
-          :rules="[(v) => !!v || 'Примечание обязательное поле']"
-        />
-        <v-text-field
-          name="created_by"
-          variant="outlined"
-          label="Номер оператора"
-          density="compact"
-          color="info"
-          :rules="[(v) => !!v || 'Обязательное поле']"
-        />
-        <v-card-actions>
-          <v-spacer />
-          <v-btn color="red" @click="dialog = false">Отмена</v-btn>
-          <v-btn color="info" type="submit" form="create-form">Сохранить</v-btn>
-        </v-card-actions>
-      </v-form>
-    </Dialog>
+    <v-dialog v-model="dialog" width="500">
+      <v-card title="Создать" subtitle="Создание записи">
+        <v-form
+          @submit.prevent="handleSubmit"
+          id="create-form"
+          class="w-100 px-3 mt-5"
+        >
+          <v-text-field
+            name="fio"
+            variant="outlined"
+            label="Ф.И.О"
+            density="compact"
+            color="info"
+            :rules="[(v) => !!v || 'Ф.И.О обязательное поле']"
+          />
+          <v-text-field
+            name="phone"
+            variant="outlined"
+            label="Телефон"
+            density="compact"
+            color="info"
+            :rules="[(v) => !!v || 'Телефон обязательное поле']"
+          />
+          <v-text-field
+            name="pinfl"
+            variant="outlined"
+            label="Пинфл"
+            density="compact"
+            color="info"
+            :rules="[(v) => !!v || 'Пинфл обязательное поле']"
+          />
+          <v-textarea
+            :auto-grow="true"
+            name="note"
+            variant="outlined"
+            label="Примечание"
+            density="compact"
+            color="info"
+            :rules="[(v) => !!v || 'Примечание обязательное поле']"
+          />
+          <v-text-field
+            name="created_by"
+            variant="outlined"
+            label="Номер оператора"
+            density="compact"
+            color="info"
+            :rules="[(v) => !!v || 'Обязательное поле']"
+          />
+          <v-card-actions>
+            <v-spacer />
+            <v-btn color="red" @click="dialog = false">Отмена</v-btn>
+            <v-btn color="info" type="submit" form="create-form"
+              >Сохранить</v-btn
+            >
+          </v-card-actions>
+        </v-form>
+      </v-card>
+    </v-dialog>
     <!-- END -->
-    <Dialog
-      :dialog="endDialog"
-      title="Завершить"
-      subtitle="Чтобы завершить запись укажите номер оператора"
-    >
-      <v-form id="end-form" @submit.prevent="handleEnd" class="w-100 px-3 mt-5">
-        <v-text-field
-          name="operator_number"
-          variant="outlined"
-          label="Номер оператора"
-          density="compact"
-          color="info"
-          :rules="[(v) => !!v || 'Обязательное поле']"
-        />
-        <v-card-actions>
-          <v-spacer />
-          <v-btn color="red" @click="endDialog = false">Отмена</v-btn>
-          <v-btn color="info" type="submit" form="end-form">Сохранить</v-btn>
-        </v-card-actions>
-      </v-form>
-    </Dialog>
+    <v-dialog v-model="endDialog" width="500">
+      <v-card
+        title="Завершить"
+        subtitle="Чтобы завершить запись укажите номер оператора"
+      >
+        <v-form
+          id="end-form"
+          @submit.prevent="handleEnd"
+          class="w-100 px-3 mt-5"
+        >
+          <v-text-field
+            name="operator_number"
+            variant="outlined"
+            label="Номер оператора"
+            density="compact"
+            color="info"
+            :rules="[(v) => !!v || 'Обязательное поле']"
+          />
+          <v-card-actions>
+            <v-spacer />
+            <v-btn color="red" @click="endDialog = false">Отмена</v-btn>
+            <v-btn color="info" type="submit" form="end-form">Сохранить</v-btn>
+          </v-card-actions>
+        </v-form>
+      </v-card>
+    </v-dialog>
   </section>
 </template>
