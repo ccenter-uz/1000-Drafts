@@ -15,10 +15,18 @@ let search = ref(route.query.search || "");
 const pageSizes = ["10", "20", "50", "100"];
 const pageSize = ref(route.query.pageSize || 10);
 const totalPage = ref(0);
+const rows = ref([]);
 
 // METHODS
 const handleGet = async () => {
-  await GET(route.query.search, route.query.page, route.query.pageSize);
+  const res = await GET(
+    route.query.search,
+    route.query.page,
+    route.query.pageSize
+  );
+
+  totalPage.value = res.total;
+  rows.value = res.search;
 };
 
 onMounted(async () => {
@@ -65,7 +73,6 @@ const handleBack = async (e) => {
   res &&
     (Swal.fire({ title: "Успех", text: "Запись вернулась", icon: "success" }),
     await handleGet());
-  console.log(body, "end-body");
 };
 const copyToClipboard = async (text) => {
   if (navigator.clipboard) {
@@ -104,7 +111,7 @@ const columns = [
   },
   {
     title: "Создано",
-    key: "created",
+    key: "created_at",
   },
   {
     title: "Оператор создал",
@@ -113,35 +120,6 @@ const columns = [
   {
     title: "Действия",
     key: "actions",
-  },
-];
-const rows = [
-  {
-    id: 1,
-    name: "Фазилова Анастасия Александровна",
-    pinfl: "123456789012",
-    phone: "998901236547",
-    note: "Примечание budet nado ыфвлдфцов щзшфцовщш фрцагш рфцшгщ арфшщгр афцгр ашгфыр ашгфрыа грфы",
-    created: "21.05.2024",
-    created_by: "№425",
-  },
-  {
-    id: 2,
-    name: "Фазилова Анастасия Александровна",
-    pinfl: "123456789012",
-    phone: "998901236547",
-    note: "Примечание ",
-    created: "21.05.2024",
-    created_by: "№425",
-  },
-  {
-    id: 3,
-    name: "Фазилова Анастасия Александровна",
-    pinfl: "123456789012",
-    phone: "998901236547",
-    note: "Примечание ",
-    created: "21.05.2024",
-    created_by: "№425",
   },
 ];
 </script>
@@ -161,6 +139,7 @@ const rows = [
       <h1>История</h1>
     </div>
 
+    <!-- SEARCH-PART -->
     <div class="search_part w-100 my-3">
       <v-text-field
         @click:append-inner="
@@ -223,13 +202,15 @@ const rows = [
             </td>
           </tr>
           <tr v-else-if="rows && rows?.length == 0">
-            <td class="text-center my-4">Ничего не найдено</td>
+            <td class="text-center my-4" style="font-weight: 600">
+              Ничего не найдено
+            </td>
           </tr>
         </tbody>
       </v-table>
       <!-- PAGINATION -->
       <div class="w-100 d-flex align-center justify-end my-3">
-        <p class="text mr-3">Всего записей: {{ rows?.length }}</p>
+        <p class="text mr-3">Всего записей: {{ totalPage }}</p>
         <v-select
           class="select"
           v-model="pageSize"
@@ -240,7 +221,7 @@ const rows = [
           @update:model-value="handlePageSizeChange"
         />
         <v-pagination
-          :length="6"
+          :length="totalPage"
           v-model="page"
           density="comfortable"
           @update:model-value="handlePageChange"

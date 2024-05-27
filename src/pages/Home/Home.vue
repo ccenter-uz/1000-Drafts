@@ -19,10 +19,17 @@ let search = ref(route.query.search || "");
 const pageSizes = ["10", "20", "50", "100"];
 const pageSize = ref(route.query.pageSize || 10);
 const totalPage = ref(0);
+const rows = ref([]);
 
 // METHODS
 const handleGet = async () => {
-  await GET(route.query.search, route.query.page, route.query.pageSize);
+  const res = await GET(
+    route.query.search,
+    route.query.page,
+    route.query.pageSize
+  );
+  totalPage.value = res.total;
+  rows.value = res.search;
 };
 
 onMounted(async () => {
@@ -75,7 +82,6 @@ const handleSubmit = async (e) => {
       ((dialog.value = false),
       Swal.fire({ title: "Успех", text: "Запись создана", icon: "success" }),
       handleGet());
-    console.log(body, "create-body");
   } else {
     console.log("Fill all fields");
   }
@@ -84,15 +90,14 @@ const handleEnd = async (e) => {
   const formData = new FormData(e.currentTarget);
   const body = {
     id: record.value.id,
-    operator_number: formData.get("operator_number"),
+    end_by: formData.get("operator_number"),
   };
-  if (body.operator_number) {
+  if (body.end_by) {
     const res = await END(body);
     res &&
       ((endDialog.value = false),
       Swal.fire({ title: "Успех", text: "Запись завершена", icon: "success" }),
       handleGet());
-    console.log(body, "end-body");
   } else {
     console.log("Fill all fields");
   }
@@ -134,7 +139,7 @@ const columns = [
   },
   {
     title: "Создано",
-    key: "created",
+    key: "created_at",
   },
   {
     title: "Оператор создал",
@@ -143,35 +148,6 @@ const columns = [
   {
     title: "Действия",
     key: "actions",
-  },
-];
-const rows = [
-  {
-    id: 1,
-    name: "Фазилова Анастасия Александровна",
-    pinfl: "123456789012",
-    phone: "998901236547",
-    note: "Примечание budet nado ыфвлдфцов щзшфцовщш фрцагш рфцшгщ арфшщгр афцгр ашгфыр ашгфрыа грфы",
-    created: "21.05.2024",
-    created_by: "№425",
-  },
-  {
-    id: 2,
-    name: "Фазилова Анастасия Александровна",
-    pinfl: "123456789012",
-    phone: "998901236547",
-    note: "Примечание ",
-    created: "21.05.2024",
-    created_by: "№425",
-  },
-  {
-    id: 3,
-    name: "Фазилова Анастасия Александровна",
-    pinfl: "123456789012",
-    phone: "998901236547",
-    note: "Примечание ",
-    created: "21.05.2024",
-    created_by: "№425",
   },
 ];
 </script>
@@ -264,13 +240,15 @@ const rows = [
             </td>
           </tr>
           <tr v-else-if="rows && rows?.length == 0">
-            <td class="text-center my-4">Ничего не найдено</td>
+            <td class="text-center my-4" style="font-weight: 600">
+              Ничего не найдено
+            </td>
           </tr>
         </tbody>
       </v-table>
       <!-- PAGINATION -->
       <div class="w-100 d-flex align-center justify-end my-3">
-        <p class="text mr-3">Всего записей: {{ rows?.length }}</p>
+        <p class="text mr-3">Всего записей: {{ totalPage }}</p>
         <v-select
           class="select"
           v-model="pageSize"
@@ -281,7 +259,7 @@ const rows = [
           @update:model-value="handlePageSizeChange"
         />
         <v-pagination
-          :length="6"
+          :length="totalPage"
           v-model="page"
           density="comfortable"
           @update:model-value="handlePageChange"
