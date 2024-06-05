@@ -12,6 +12,11 @@ export const CREATE = async (body) => {
   return api.post("drafts", body).then((res) => res.data);
 };
 
+// UPDATE
+export const UPDATE = async (body, id) => {
+  return api.put(`drafts/${id}`, body).then((res) => res.data);
+};
+
 // END
 export const END = async (body) => {
   return api.post("moveToHistory", body).then((res) => res.data);

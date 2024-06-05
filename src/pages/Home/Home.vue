@@ -4,8 +4,9 @@ import Magnify from "vue-material-design-icons/Magnify.vue";
 import Plus from "vue-material-design-icons/Plus.vue";
 import { ref, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { CREATE, GET, END } from "./api";
+import { CREATE, GET, END, UPDATE } from "./api";
 import Swal from "sweetalert2";
+import { mdiPen, mdiCheckBold } from "@mdi/js";
 
 // CONSTANTS
 const router = useRouter();
@@ -67,24 +68,45 @@ const handlePageChange = async (e) => {
   });
 };
 const handleSubmit = async (e) => {
-  const formData = new FormData(e.currentTarget);
-  const body = {
-    name: formData.get("fio"),
-    phone: formData.get("phone"),
-    pinfl: formData.get("pinfl"),
-    note: formData.get("note"),
-    created_by: formData.get("created_by"),
-  };
-  if (body.name && body.phone && body.pinfl && body.created_by && body.note) {
-    const res = await CREATE(body);
-    res &&
-      ((dialog.value = false),
-      Swal.fire({ title: "Успех", text: "Запись создана", icon: "success" }),
-      handleGet());
+  if (record.value !== null) {
+    const formData = new FormData(e.currentTarget);
+    const body = {
+      name: formData.get("fio"),
+      phone: formData.get("phone"),
+      pinfl: formData.get("pinfl"),
+      note: formData.get("note"),
+      created_by: formData.get("created_by"),
+    };
+    if (body.name && body.phone && body.pinfl && body.created_by && body.note) {
+      const res = await UPDATE(body, record.value.id);
+      res &&
+        ((dialog.value = false),
+        Swal.fire({ title: "Успех", text: "Запись изменено", icon: "success" }),
+        handleGet());
+    } else {
+      console.log("Fill all fields");
+    }
   } else {
-    console.log("Fill all fields");
+    const formData = new FormData(e.currentTarget);
+    const body = {
+      name: formData.get("fio"),
+      phone: formData.get("phone"),
+      pinfl: formData.get("pinfl"),
+      note: formData.get("note"),
+      created_by: formData.get("created_by"),
+    };
+    if (body.name && body.phone && body.pinfl && body.created_by && body.note) {
+      const res = await CREATE(body);
+      res &&
+        ((dialog.value = false),
+        Swal.fire({ title: "Успех", text: "Запись создана", icon: "success" }),
+        handleGet());
+    } else {
+      console.log("Fill all fields");
+    }
   }
 };
+
 const handleEnd = async (e) => {
   const formData = new FormData(e.currentTarget);
   const body = {
@@ -185,7 +207,7 @@ const columns = [
         color="info"
         :prepend-icon="Plus"
         class="d-flex align-center justify-center"
-        @click="dialog = true"
+        @click="(dialog = true), (record = null)"
         >Создать</v-btn
       >
     </div>
@@ -243,14 +265,20 @@ const columns = [
                     : row["note"]
                   : row[key]
               }}
-              <v-btn
-                v-if="key == 'actions'"
-                color="warning"
-                class="d-flex align-center justify-center"
-                @click="(endDialog = true), (record = row)"
-              >
-                Завершить
-              </v-btn>
+              <div class="d-flex align-center justify-space-evenly">
+                <v-icon
+                  v-if="key == 'actions'"
+                  :icon="mdiPen"
+                  color="orange"
+                  @click="(dialog = true), (record = row)"
+                />
+                <v-icon
+                  v-if="key == 'actions'"
+                  color="green"
+                  :icon="mdiCheckBold"
+                  @click="(endDialog = true), (record = row)"
+                />
+              </div>
             </td>
           </tr>
           <tr v-else-if="rows && rows?.length == 0">
@@ -290,6 +318,7 @@ const columns = [
         >
           <v-text-field
             name="fio"
+            :model-value="record && record.name"
             variant="outlined"
             label="Ф.И.О"
             density="compact"
@@ -298,6 +327,7 @@ const columns = [
           />
           <v-text-field
             name="phone"
+            :model-value="record && record.phone"
             variant="outlined"
             label="Телефон"
             density="compact"
@@ -306,6 +336,7 @@ const columns = [
           />
           <v-text-field
             name="pinfl"
+            :model-value="record && record.pinfl"
             variant="outlined"
             label="Пинфл"
             density="compact"
@@ -315,6 +346,7 @@ const columns = [
           <v-textarea
             :auto-grow="true"
             name="note"
+            :model-value="record && record.note"
             variant="outlined"
             label="Примечание"
             density="compact"
@@ -323,6 +355,7 @@ const columns = [
           />
           <v-text-field
             name="created_by"
+            :model-value="record && record.created_by"
             variant="outlined"
             label="Номер оператора"
             density="compact"
