@@ -6,6 +6,7 @@ import { useRoute, useRouter } from "vue-router";
 import { RETURN, GET } from "./api";
 import Swal from "sweetalert2";
 import { mdiSync } from "@mdi/js";
+import DialogModal from "../../widgets/Dialog/index.vue"
 
 // CONSTANTS
 const router = useRouter();
@@ -78,7 +79,6 @@ const copyToClipboard = async (text) => {
   if (navigator.clipboard) {
     try {
       await navigator.clipboard.writeText(text);
-      alert("Text copied to clipboard!");
     } catch (err) {
       console.error("Failed to copy text: ", err);
     }
@@ -184,19 +184,9 @@ const columns = [
               @click.prevent="key === 'note' && copyToClipboard(row['note'])"
               :style="key === 'note' && 'cursor:pointer'"
             >
-              <v-tooltip
-                v-if="key === 'note'"
-                :text="row['note']"
-                activator="parent"
-                location="bottom"
-              >
-              </v-tooltip>
+            <DialogModal v-if="key === 'note'" :text="row['note']" @copy-to-clipboard="copyToClipboard" />
               {{
-                row[key] === row["note"]
-                  ? row["note"]?.length > 15
-                    ? row["note"].slice(0, 10) + "..."
-                    : row["note"]
-                  : row[key]
+                row[key] !== row["note"] ? row[key] : null
               }}
               <v-icon
                 v-if="key == 'actions'"

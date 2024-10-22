@@ -1,12 +1,13 @@
 <style src="./style.scss" lang="scss" />
 <script setup>
 import Magnify from "vue-material-design-icons/Magnify.vue";
-import Plus from "vue-material-design-icons/Plus.vue";
+import Plus from "vue-material-design-icons/FilePlus.vue";
 import { ref, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { CREATE, GET, END, UPDATE } from "./api";
 import Swal from "sweetalert2";
 import { mdiPen, mdiCheckBold } from "@mdi/js";
+import DialogModal from "../../widgets/Dialog/index.vue"
 
 // CONSTANTS
 const router = useRouter();
@@ -123,11 +124,11 @@ const handleEnd = async (e) => {
     console.log("Fill all fields");
   }
 };
+
 const copyToClipboard = async (text) => {
   if (navigator.clipboard) {
     try {
       await navigator.clipboard.writeText(text);
-      alert("Text copied to clipboard!");
     } catch (err) {
       console.error("Failed to copy text: ", err);
     }
@@ -248,22 +249,11 @@ const columns = [
             <td
               v-for="{ key } in columns"
               :class="key === 'created_by' ? 'text-center' : 'text-left'"
-              @click.prevent="key === 'note' && copyToClipboard(row['note'])"
               :style="key === 'note' && 'cursor:pointer'"
             >
-              <v-tooltip
-                v-if="key === 'note'"
-                :text="row['note']"
-                activator="parent"
-                location="bottom"
-              >
-              </v-tooltip>
+            <DialogModal v-if="key === 'note'" :text="row['note']" @copy-to-clipboard="copyToClipboard" />
               {{
-                row[key] === row["note"]
-                  ? row["note"]?.length > 15
-                    ? row["note"].slice(0, 10) + "..."
-                    : row["note"]
-                  : row[key]
+                row[key] !== row["note"] ? row[key] : null
               }}
               <div class="d-flex align-center justify-space-evenly">
                 <v-icon
